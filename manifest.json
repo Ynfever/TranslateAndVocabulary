@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Text Translator & Vocabulary Saver",
+  "version": "1.0",
+  "description": "Translate selected text, choose key vocabulary, and save for later review.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["style.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icon.png"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_title": "Text Translator & Vocabulary Saver"
+  }
+}
