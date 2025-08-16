@@ -4,7 +4,7 @@
   position: absolute;
   width: 24px;
   height: 24px;
-  background-image: url('chrome-extension://__MSG_@@extension_id__/icon.png');
+  background-image: url('chrome-extension://__MSG_@@extension_id__/images/icon.png');
   background-size: contain;
   cursor: pointer;
   z-index: 99999;
@@ -19,7 +19,7 @@
 
 #tt-popup {
   position: absolute;
-  width: 350px;
+  width: 360px;
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -43,7 +43,7 @@
 
 .tt-vocab-pill {
   display: inline-block;
-  padding: 6px 12px;
+  padding: 8px 12px;
   margin: 4px;
   font-size: 13px;
   background-color: #f0f0f0;
@@ -51,6 +51,9 @@
   cursor: pointer;
   transition: background-color 0.2s;
   border: 1px solid transparent;
+  max-width: 280px;
+  word-wrap: break-word;
+  line-height: 1.4;
 }
 
 .tt-vocab-pill.selected {
@@ -58,4 +61,8 @@
   color: #000;
   font-weight: 500;
   border-color: #e6ac00;
+}
+
+.tt-vocab-pill strong {
+  color: #0066cc;
 }

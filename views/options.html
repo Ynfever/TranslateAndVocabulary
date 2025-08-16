@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Translator & Vocabulary - Settings</title>
+  <meta charset="utf-8">
+  <link rel="icon" href="../images/icon.png">
+  <link rel="stylesheet" href="../styles/options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🌍 Translator & Vocabulary Settings</h1>
+      <p>Configure your extension settings</p>
+    </header>
+
+    <main>
+      <section class="section">
+        <h2>🔑 API Configuration</h2>
+        <div class="form-group">
+          <label for="apiKey">Gemini API Key:</label>
+          <div class="input-container">
+            <input type="password" id="apiKey" placeholder="Enter your Gemini API key">
+            <button type="button" id="toggleApiKey" class="toggle-btn">👁️</button>
+          </div>
+          <small class="help-text">
+            Get your free API key from <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
+          </small>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>📱 About</h2>
+        <p>This extension helps you translate text and build your vocabulary using Google's Gemini AI.</p>
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Version:</strong> 1.0
+          </div>
+          <div class="info-item">
+            <strong>Language Support:</strong> English to Chinese
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="button-group">
+        <button id="saveBtn" class="btn btn-primary">💾 Save Settings</button>
+        <button id="testBtn" class="btn btn-secondary">🧪 Test API Key</button>
+      </div>
+      <div id="status" class="status"></div>
+    </footer>
+  </div>
+
+  <script src="../scripts/options.js"></script>
+</body>
+</html>
