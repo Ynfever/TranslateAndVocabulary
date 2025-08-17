@@ -23,6 +23,38 @@ h1 {
   margin-bottom: 25px;
 }
 
+#summary {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 25px;
+  color: #606770;
+}
+
+#summary strong {
+  color: #1c1e21;
+}
+
+.date-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #e7f3ff;
+}
+
+.date-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #0056b3;
+}
+
+.date-header span {
+  font-size: 16px;
+  color: #606770;
+  font-weight: 500;
+}
+
 .vocab-card {
   border: 1px solid #dddfe2;
   border-radius: 8px;
