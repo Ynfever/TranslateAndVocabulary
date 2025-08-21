@@ -21,7 +21,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["images/icon.png", "views/welcome.html"],
+      "resources": ["images/icon.png", "views/welcome.html", "views/wordCard.html"],
       "matches": ["<all_urls>"]
     }
   ],

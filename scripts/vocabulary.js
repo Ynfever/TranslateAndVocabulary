@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const wordsDiv = document.createElement('div');
         wordsDiv.className = 'selected-words';
         wordsDiv.innerHTML = item.selectedWords.map(v =>
-          `<span class="word-tag"><strong>${v.word}</strong>: ${v.translation} (${v.definition})</span>`
+          `<span class="word-tag"><strong><a href="../views/wordCard.html?word=${encodeURIComponent(v.word)}&timestamp=${item.timestamp}" target="_blank">${v.word}</a></strong>: ${v.translation} (${v.definition})</span>`
         ).join('');
 
         card.appendChild(originalP);
