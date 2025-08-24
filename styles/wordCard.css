@@ -1,5 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;700&display=swap');
 
+/* Hide scrollbars for all elements */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+*::-webkit-scrollbar {
+    display: none; /* WebKit browsers (Chrome, Safari, etc.) */
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: #f0f2f5;
@@ -10,6 +20,16 @@ body {
     align-items: center;
     min-height: 100vh;
     box-sizing: border-box;
+    overflow: hidden; /* Hide scrollbars */
+}
+
+/* When used in review page, remove body padding and centering */
+body.review-page {
+    padding: 0;
+    display: block;
+    min-height: auto;
+    background-color: transparent;
+    overflow: hidden; /* Hide scrollbars in review page */
 }
 
 .card-container {
@@ -20,15 +40,29 @@ body {
     padding: 40px;
     border-radius: 12px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* Hide scrollbars within card */
+}
+
+/* When used in review page with scrolling container */
+.review-page .card-container {
+    width: 100%;
+    height: auto; /* Let content determine height */
+    box-shadow: none; /* Parent #word-card-container handles card styling */
+    border-radius: 0; /* Parent #word-card-container handles card styling */
+    padding: 20px; /* Content padding inside the card */
+    margin: 0; /* Ensure no extra margins */
+    background-color: transparent; /* Parent #word-card-container handles background */
+    overflow: hidden; /* Hide scrollbars within card */
 }
 
 .word-section {
     margin-bottom: 40px;
+    position: relative;
 }
 
 .word-section h1 {
     font-family: 'Headland One', serif;
-    font-size: 60px;
+    font-size: 56px;
     font-weight: 400;
     margin: 0;
     color: #000000;
@@ -48,6 +82,22 @@ body {
     flex-direction: column;
     gap: 30px;
 }
+
+.star-btn {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+}
+.star-btn svg path {
+    fill: #d1d1d1;
+    transition: fill 0.2s ease-in-out;
+}
+.star-btn[aria-pressed="true"] svg path { fill: #e8b357; }
+.star-btn:hover svg path { fill: #e8b357; }
 
 .detail-group {
     width: 100%;
@@ -130,6 +180,10 @@ ul li.incorrect {
     background-color: #f8d7da; /* Light red for incorrect */
 }
 
+ul li.starred {
+    background-color: #ffff99 !important; /* Highlight yellow for starred words */
+}
+
 #example-text, #mcq-question {
     font-size: 20px;
     font-weight: 400;
@@ -140,4 +194,325 @@ ul li.incorrect {
 
 #mcq-options-list {
     margin-top: 15px;
+}
+
+/* Merged Word Examples Styles */
+.examples-title {
+    font-family: 'Headland One', serif;
+    color: #e87057;
+    font-size: 24px;
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.examples-title::before {
+    content: '●';
+    color: #79e857;
+    font-size: 18px;
+}
+
+.examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.example-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.example-item:hover {
+    background: #f0f4f8;
+    border-color: #79e857;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(121, 232, 87, 0.2);
+}
+
+.example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.example-number {
+    font-weight: 700;
+    color: #e87057;
+    font-size: 16px;
+}
+
+.example-date {
+    font-size: 12px;
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.example-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.example-en {
+    font-size: 18px;
+    line-height: 1.4;
+    color: #212529;
+}
+
+.example-cn {
+    font-size: 16px;
+    line-height: 1.4;
+    color: #495057;
+    font-style: italic;
+}
+
+.example-context {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e9ecef;
+}
+
+.context-translation {
+    font-size: 14px;
+    color: #6c757d;
+    background: #e7f3ff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.highlight-word {
+    background: linear-gradient(120deg, #79e857 0%, #79e857 100%);
+    background-repeat: no-repeat;
+    background-size: 100% 30%;
+    background-position: 0 85%;
+    font-weight: 700;
+    color: #000;
+    padding: 0 2px;
+}
+
+.examples-navigation {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.toggle-examples {
+    background: #e87057;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.toggle-examples:hover {
+    background: #d63447;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(232, 112, 87, 0.3);
+}
+
+/* Responsive adjustments for merged examples */
+@media (max-width: 640px) {
+    .examples-title {
+        font-size: 20px;
+    }
+    
+    .example-item {
+        padding: 12px;
+    }
+    
+    .example-en {
+        font-size: 16px;
+    }
+    
+    .example-cn {
+        font-size: 14px;
+    }
+}
+
+/* Styles for multiple MCQs and examples */
+.mcq-item {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e5e9;
+}
+
+.mcq-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.mcq-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.mcq-header h4 {
+    margin: 0;
+    font-size: 18px;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.mcq-source {
+    font-size: 12px;
+    color: #7f8c8d;
+    background-color: #ecf0f1;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.examples-section {
+    margin-top: 0;
+}
+
+.examples-section h4 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+.example-item {
+    margin-bottom: 25px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.example-item:last-child {
+    margin-bottom: 0;
+}
+
+.example-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.example-number {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.example-source {
+    font-size: 12px;
+    color: #7f8c8d;
+    background-color: #e8f4fd;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+.example-content .example-en {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.example-content .example-cn {
+    font-size: 15px;
+    line-height: 1.5;
+    color: #5a6c7d;
+    font-style: italic;
+}
+
+/* Responsive adjustments for multiple content */
+@media (max-width: 600px) {
+    .mcq-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .example-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .mcq-header h4,
+    .examples-section h4 {
+        font-size: 16px;
+    }
+    
+    .example-item {
+        padding: 15px;
+    }
+}
+
+/* Styles for additional MCQs and examples */
+.mcq-section .mcq-question {
+    font-size: 20px;
+    font-weight: 400;
+    color: #000000;
+    line-height: 1.5;
+    margin: 0;
+    margin-bottom: 15px;
+}
+
+.mcq-section .mcq-options-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.mcq-section .mcq-options-list li {
+    background-color: #e7f3ff;
+    border-radius: 5px;
+    padding: 5px 12px;
+    font-size: 20px;
+    font-weight: 400;
+    color: #000000;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.mcq-section .mcq-options-list li strong {
+    font-weight: 700;
+}
+
+.mcq-section .mcq-options-list li.correct {
+    background-color: #d4edda; /* Light green for correct */
+}
+
+.mcq-section .mcq-options-list li.incorrect {
+    background-color: #f8d7da; /* Light red for incorrect */
+}
+
+.mcq-section .mcq-options-list li.starred {
+    background-color: #ffff99 !important; /* Highlight yellow for starred words */
+}
+
+.example-section .example-text {
+    font-size: 20px;
+    font-weight: 400;
+    color: #000000;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.example-section .example-text strong {
+    font-weight: 700;
 }

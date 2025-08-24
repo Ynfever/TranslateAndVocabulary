@@ -214,12 +214,31 @@ function saveData(originalText, translation, selectedWords) {
     }
     
     const learnedItems = result.learnedItems;
-    learnedItems.push(newItem);
-    chrome.storage.local.set({ learnedItems }, () => {
+    
+    // Use vocabulary merger to handle duplicate words
+    const merger = new VocabularyMerger();
+    const mergeResult = merger.processNewWords(newItem, learnedItems);
+    
+    console.log('Merge result:', {
+      mergedWords: mergeResult.mergedWords,
+      totalItems: mergeResult.updatedItems.length
+    });
+
+    // Save merged vocabulary data separately for easy access
+    const mergedVocabulary = Object.fromEntries(merger.getMergedVocabulary());
+    
+    chrome.storage.local.set({ 
+      learnedItems: mergeResult.updatedItems,
+      mergedVocabulary: mergedVocabulary
+    }, () => {
       if (chrome.runtime.lastError) {
         console.error('Save error:', chrome.runtime.lastError.message);
       } else {
-        console.log('Data saved successfully!', newItem);
+        console.log('Data saved successfully with merged vocabulary!', {
+          newItem,
+          mergedWords: mergeResult.mergedWords,
+          vocabularyStats: merger.getStatistics()
+        });
       }
     });
   });

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Main Page</title>
+  <link rel="icon" href="../images/icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/main.css" />
+</head>
+<body>
+  <div class="page" id="page">
+    <header class="overview" id="overview">
+      <div class="overview-item" id="overview-total" role="button" tabindex="0">
+        <div class="label headland">Total<br/>Vocab</div>
+        <div class="counter"><span class="current">1</span><span class="total">/0</span></div>
+      </div>
+      <div class="overview-item" id="overview-daily" role="button" tabindex="0">
+        <div class="label headland">Daily<br/>Review</div>
+        <div class="counter"><span class="current">1</span><span class="total">/0</span></div>
+      </div>
+      <div class="overview-item" id="overview-unit" role="button" tabindex="0">
+        <div class="label headland">Unit<br/>Test</div>
+        <div class="counter"><span class="current">1</span><span class="total">/0</span></div>
+      </div>
+      <div class="overview-item" id="overview-star" role="button" tabindex="0">
+        <div class="label headland">Stared<br/>Words</div>
+        <div class="counter"><span class="current">1</span><span class="total">/0</span></div>
+      </div>
+    </header>
+
+    <main class="workspace" id="workspace">
+      <section class="main-panel" id="main-panel">
+        <div class="vocab" id="vocab">
+          <!-- Date sections and blocks will be rendered here -->
+        </div>
+      </section>
+      <aside class="card-panel" id="card-panel" aria-hidden="true">
+        <iframe id="word-card-frame" title="Word Card" loading="lazy"></iframe>
+      </aside>
+    </main>
+  </div>
+
+  <script src="../scripts/vocabulary-merger.js"></script>
+  <script src="../scripts/main.js"></script>
+</body>
+</html>

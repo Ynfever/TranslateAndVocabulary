@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Headland+One&family=Inter:wght@400;700&display=swap');
+
+:root {
+  --accent: #e87057;
+  --accent-2: #e8b357;
+  --accent-3: #79e857;
+  --muted: #9f9f9f;
+  --text: #000000;
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.headland { font-family: 'Headland One', serif; }
+
+.page { padding: 40px; }
+
+/* Overview header */
+.overview {
+  max-width: 995px;
+  margin: 0 auto 32px auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(137px, 1fr));
+  gap: 112px;
+  align-items: center;
+}
+
+.overview-item { cursor: pointer; user-select: none; }
+.overview-item .label {
+  color: var(--accent);
+  font-size: 48px;
+  line-height: 1.05;
+}
+.overview-item .counter { display: flex; align-items: baseline; gap: 6px; }
+.overview-item .counter .current { font-family: 'Headland One', serif; font-size: 70px; }
+.overview-item .counter .total { color: var(--muted); font-family: 'Headland One', serif; font-size: 60px; }
+
+/* Workspace: main left, card right */
+.workspace {
+  max-width: 995px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr; /* main content only; card is fixed */
+  gap: 24px;
+  align-items: start;
+}
+
+.main-panel { overflow: hidden; transition: transform 300ms ease; }
+.workspace.show-card .main-panel { transform: translateX(-20px); }
+
+.vocab { display: flex; flex-direction: column; gap: 20px; }
+
+/* Date header */
+.date-group { display: flex; flex-direction: column; gap: 12px; }
+.date-header { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 6px; }
+.date-header .day-wrap { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 6px; position: relative; }
+.date-header .underline { width: 159px; height: 10px; border-radius: 5px; background: var(--accent); position: absolute; bottom: -1px; left: 0; z-index: 0; opacity: 0.58; pointer-events: none; }
+.date-header .day { font-family: 'Headland One', serif; font-size: 30px; line-height: 1; position: relative; z-index: 1; }
+.date-header .count { color: #535353; font-size: 18px; justify-self: end; }
+
+/* Block card */
+.block {
+  background: var(--card);
+  border-radius: 7.5px;
+  padding: 20px;
+}
+.block .lines { height: 1px; background: #bebebe; margin: 12px 0; }
+.block .pair { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.block p { margin: 0; font-size: 20px; line-height: 1.4; }
+.block p em { font-style: normal; font-weight: 700; }
+.block .words { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 12px; }
+.word-chip { background: #e7f3ff; border-radius: 5px; padding: 6px 10px; font-size: 20px; cursor: pointer; font-weight: 400; transition: all 0.2s ease; }
+.word-chip .en { font-weight: 400; }
+.word-chip .cn { color: #555; margin-left: 6px; font-weight: 400; }
+
+/* Merged word styling - indicates word appears in multiple sentences */
+.word-chip.merged-word { 
+  background: linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 50%, #e1f5fe 100%);
+  border: 2px solid var(--accent-3);
+  position: relative;
+}
+.word-chip.merged-word::before {
+  content: '●';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  color: var(--accent-3);
+  font-size: 8px;
+  line-height: 1;
+}
+.word-chip.merged-word:hover {
+  background: linear-gradient(135deg, #d4edff 0%, #e8f4ff 50%, #cef0fd 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(121, 232, 87, 0.3);
+}
+
+/* Card panel: fixed to bottom-right, independent of scroll */
+.card-panel { 
+  position: fixed;
+  right: 40px; /* match page padding */
+  top: 0; /* Use full height */
+  bottom: 0; /* Use full height */
+  width: min(600px, calc(100vw - 80px));
+  height: 100vh; /* Full viewport height */
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 1000;
+  overflow-y: auto; /* Add scrolling when content exceeds height */
+  padding: 80px 0; /* Add padding for top and bottom margins */
+  box-sizing: border-box;
+  /* Hide scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.card-panel::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+.card-panel[aria-hidden="true"] { display: none; }
+.card-panel iframe { width: 100%; border: 0; display: block; min-height: calc(100% - 160px); }
+
+/* Utilities */
+.hidden { display: none; }
+
+/* When card is visible, widen the layout and nudge overview left too */
+.page.card-open .overview { max-width: 1600px; transition: transform 300ms ease, max-width 300ms ease; }
+.page.card-open .overview { transform: translateX(-20px); }
+.page.card-open .workspace { max-width: 1600px; }
+.page.card-open .workspace { margin-bottom: 0; } /* No need for margin since card uses padding */
+.page.card-open .overview,
+.page.card-open .workspace {
+  padding-right: min(640px, calc(100vw - 80px)); /* keep content clear of fixed card on the right */
+}

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migrate to Vocabulary Merger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .progress {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #28a745, #20c997);
+            height: 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .stat-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .log {
+            background: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 5px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 Vocabulary Merger Migration</h1>
+        <p>Upgrade your vocabulary system to support multiple examples per word</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Pre-Migration Analysis</h2>
+        <button onclick="analyzeCurrentData()" id="analyzeBtn">Analyze Current Data</button>
+        <div id="analysisResult"></div>
+        <div id="currentStats" class="stats"></div>
+    </div>
+
+    <div class="section">
+        <h2>🚀 Migration Process</h2>
+        <div class="warning">
+            <strong>⚠️ Important:</strong> This process will backup your existing data before making changes. 
+            The migration is designed to be safe and reversible.
+        </div>
+        
+        <button onclick="startMigration()" id="migrateBtn" disabled>Start Migration</button>
+        <button onclick="createBackup()" id="backupBtn">Create Backup</button>
+        <button onclick="restoreBackup()" id="restoreBtn">Restore from Backup</button>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="progressText">Ready to migrate</div>
+        
+        <div id="migrationLog" class="log" style="display: none;"></div>
+    </div>
+
+    <div class="section">
+        <h2>📊 Post-Migration Results</h2>
+        <div id="migrationStats" class="stats"></div>
+        <div id="migrationResult"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Manual Operations</h2>
+        <button onclick="forceMerge()">Force Re-merge All Data</button>
+        <button onclick="validateData()">Validate Data Integrity</button>
+        <button onclick="clearMergedData()">Clear Merged Data Only</button>
+        <div id="manualResult"></div>
+    </div>
+
+    <script src="../scripts/vocabulary-merger.js"></script>
+    <script>
+        // Mock chrome.storage for testing if needed
+        if (typeof chrome === 'undefined') {
+            const mockStorage = {
+                data: {},
+                get: function(keys, callback) {
+                    const result = {};
+                    if (Array.isArray(keys)) {
+                        keys.forEach(key => {
+                            result[key] = this.data[key] || (key === 'learnedItems' || key === 'starredWords' ? [] : undefined);
+                        });
+                    } else if (typeof keys === 'object') {
+                        Object.keys(keys).forEach(key => {
+                            result[key] = this.data[key] || keys[key];
+                        });
+                    }
+                    setTimeout(() => callback(result), 10);
+                },
+                set: function(data, callback) {
+                    Object.assign(this.data, data);
+                    if (callback) setTimeout(callback, 10);
+                }
+            };
+
+            window.chrome = {
+                storage: {
+                    local: mockStorage
+                }
+            };
+        }
+
+        let currentData = null;
+        let migrationLog = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            migrationLog.push(`[${timestamp}] ${message}`);
+            const logElement = document.getElementById('migrationLog');
+            logElement.textContent = migrationLog.join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`[Migration] ${message}`);
+        }
+
+        function updateProgress(percentage, text) {
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function analyzeCurrentData() {
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            btn.textContent = 'Analyzing...';
+
+            chrome.storage.local.get(['learnedItems', 'mergedVocabulary', 'starredWords'], (data) => {
+                currentData = data;
+                const learnedItems = data.learnedItems || [];
+                const mergedVocabulary = data.mergedVocabulary || {};
+                const starredWords = data.starredWords || [];
+
+                // Analyze current data
+                const analysis = {
+                    totalItems: learnedItems.length,
+                    totalWords: 0,
+                    uniqueWords: new Set(),
+                    duplicateWords: {},
+                    alreadyMerged: Object.keys(mergedVocabulary).length > 0,
+                    starredCount: starredWords.length
+                };
+
+                learnedItems.forEach(item => {
+                    if (item.selectedWords) {
+                        analysis.totalWords += item.selectedWords.length;
+                        item.selectedWords.forEach(word => {
+                            const wordKey = word.word.toLowerCase();
+                            analysis.uniqueWords.add(wordKey);
+                            
+                            if (analysis.duplicateWords[wordKey]) {
+                                analysis.duplicateWords[wordKey]++;
+                            } else {
+                                analysis.duplicateWords[wordKey] = 1;
+                            }
+                        });
+                    }
+                });
+
+                const duplicates = Object.entries(analysis.duplicateWords)
+                    .filter(([word, count]) => count > 1)
+                    .sort((a, b) => b[1] - a[1]);
+
+                // Display analysis results
+                let resultHtml = '';
+                
+                if (analysis.alreadyMerged) {
+                    resultHtml = '<div class="success">✅ Your data has already been migrated to the new vocabulary merger system!</div>';
+                } else if (duplicates.length > 0) {
+                    resultHtml = `
+                        <div class="warning">
+                            <strong>Duplicate words found!</strong><br>
+                            Found ${duplicates.length} words that appear multiple times:<br>
+                            ${duplicates.slice(0, 5).map(([word, count]) => `"${word}" (${count} times)`).join(', ')}
+                            ${duplicates.length > 5 ? `... and ${duplicates.length - 5} more` : ''}
+                        </div>
+                    `;
+                    document.getElementById('migrateBtn').disabled = false;
+                } else {
+                    resultHtml = '<div class="success">No duplicate words found. Migration will still optimize your data structure.</div>';
+                    document.getElementById('migrateBtn').disabled = false;
+                }
+
+                document.getElementById('analysisResult').innerHTML = resultHtml;
+
+                // Display current stats
+                document.getElementById('currentStats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${analysis.totalItems}</div>
+                        <div class="stat-label">Total Sentences</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${analysis.totalWords}</div>
+                        <div class="stat-label">Total Word Instances</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${analysis.uniqueWords.size}</div>
+                        <div class="stat-label">Unique Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${duplicates.length}</div>
+                        <div class="stat-label">Words with Duplicates</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${analysis.starredCount}</div>
+                        <div class="stat-label">Starred Words</div>
+                    </div>
+                `;
+
+                btn.disabled = false;
+                btn.textContent = 'Analyze Current Data';
+            });
+        }
+
+        function createBackup() {
+            chrome.storage.local.get(['learnedItems', 'mergedVocabulary', 'starredWords'], (data) => {
+                const backup = {
+                    timestamp: new Date().toISOString(),
+                    version: '1.0',
+                    data: data
+                };
+
+                chrome.storage.local.set({
+                    vocabularyBackup: backup
+                }, () => {
+                    log('Backup created successfully');
+                    document.getElementById('manualResult').innerHTML = 
+                        '<div class="success">✅ Backup created and saved to chrome storage</div>';
+                });
+            });
+        }
+
+        function restoreBackup() {
+            chrome.storage.local.get(['vocabularyBackup'], (data) => {
+                if (!data.vocabularyBackup) {
+                    document.getElementById('manualResult').innerHTML = 
+                        '<div class="error">❌ No backup found</div>';
+                    return;
+                }
+
+                const backup = data.vocabularyBackup;
+                chrome.storage.local.set(backup.data, () => {
+                    log(`Restored from backup created at ${backup.timestamp}`);
+                    document.getElementById('manualResult').innerHTML = 
+                        '<div class="success">✅ Data restored from backup. Please refresh the page.</div>';
+                });
+            });
+        }
+
+        async function startMigration() {
+            const btn = document.getElementById('migrateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Migrating...';
+            
+            document.getElementById('migrationLog').style.display = 'block';
+            migrationLog = [];
+
+            try {
+                // Step 1: Create backup
+                updateProgress(10, 'Creating backup...');
+                await new Promise(resolve => {
+                    createBackup();
+                    setTimeout(resolve, 500);
+                });
+                log('✓ Backup created');
+
+                // Step 2: Load current data
+                updateProgress(20, 'Loading current data...');
+                const data = await new Promise(resolve => {
+                    chrome.storage.local.get(['learnedItems', 'mergedVocabulary', 'starredWords'], resolve);
+                });
+                log(`✓ Loaded ${(data.learnedItems || []).length} learned items`);
+
+                // Step 3: Initialize merger
+                updateProgress(30, 'Initializing vocabulary merger...');
+                const merger = new VocabularyMerger();
+                log('✓ Vocabulary merger initialized');
+
+                // Step 4: Merge existing vocabulary
+                updateProgress(50, 'Merging duplicate words...');
+                const learnedItems = data.learnedItems || [];
+                const mergedItems = merger.mergeExistingVocabulary(learnedItems);
+                log(`✓ Merged vocabulary completed`);
+
+                // Step 5: Get statistics
+                updateProgress(70, 'Generating statistics...');
+                const stats = merger.getStatistics();
+                const mergedVocabulary = Object.fromEntries(merger.getMergedVocabulary());
+                log(`✓ Statistics generated: ${stats.totalUniqueWords} unique words, ${stats.wordsWithMultipleExamples} with multiple examples`);
+
+                // Step 6: Save merged data
+                updateProgress(90, 'Saving merged data...');
+                await new Promise((resolve, reject) => {
+                    chrome.storage.local.set({
+                        learnedItems: mergedItems,
+                        mergedVocabulary: mergedVocabulary
+                    }, () => {
+                        if (chrome.runtime.lastError) {
+                            reject(chrome.runtime.lastError);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+                log('✓ Merged data saved successfully');
+
+                // Step 7: Complete
+                updateProgress(100, 'Migration completed successfully!');
+                log('🎉 Migration completed successfully!');
+
+                // Display results
+                document.getElementById('migrationStats').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.totalUniqueWords}</div>
+                        <div class="stat-label">Unique Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.totalOccurrences}</div>
+                        <div class="stat-label">Total Occurrences</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.wordsWithMultipleExamples}</div>
+                        <div class="stat-label">Words with Multiple Examples</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.averageExamplesPerWord}</div>
+                        <div class="stat-label">Avg Examples per Word</div>
+                    </div>
+                `;
+
+                document.getElementById('migrationResult').innerHTML = `
+                    <div class="success">
+                        <h3>🎉 Migration Completed Successfully!</h3>
+                        <p>Your vocabulary has been upgraded to the new merger system. Key improvements:</p>
+                        <ul>
+                            <li>✅ Duplicate words are now merged with all their examples</li>
+                            <li>✅ Word cards will show all contexts where a word appears</li>
+                            <li>✅ Better organization and learning experience</li>
+                            <li>✅ All existing data preserved and enhanced</li>
+                        </ul>
+                        <p><strong>Next steps:</strong> Go to the main page to see your enhanced vocabulary!</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                log(`❌ Migration failed: ${error.message}`);
+                updateProgress(0, 'Migration failed');
+                
+                document.getElementById('migrationResult').innerHTML = `
+                    <div class="error">
+                        <h3>❌ Migration Failed</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Your original data has been preserved. You can try again or restore from backup.</p>
+                    </div>
+                `;
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Start Migration';
+        }
+
+        function forceMerge() {
+            log('Starting force re-merge...');
+            chrome.storage.local.get(['learnedItems'], (data) => {
+                const merger = new VocabularyMerger();
+                const mergedItems = merger.mergeExistingVocabulary(data.learnedItems || []);
+                const mergedVocabulary = Object.fromEntries(merger.getMergedVocabulary());
+                
+                chrome.storage.local.set({
+                    learnedItems: mergedItems,
+                    mergedVocabulary: mergedVocabulary
+                }, () => {
+                    log('Force re-merge completed');
+                    document.getElementById('manualResult').innerHTML = 
+                        '<div class="success">✅ Force re-merge completed successfully</div>';
+                });
+            });
+        }
+
+        function validateData() {
+            chrome.storage.local.get(['learnedItems', 'mergedVocabulary'], (data) => {
+                const learnedItems = data.learnedItems || [];
+                const mergedVocabulary = data.mergedVocabulary || {};
+                
+                // Validate data integrity
+                const issues = [];
+                const merger = new VocabularyMerger();
+                
+                try {
+                    // Re-merge and compare
+                    const remerged = merger.mergeExistingVocabulary(learnedItems);
+                    const remergedVocab = Object.fromEntries(merger.getMergedVocabulary());
+                    
+                    // Check if current merged vocabulary matches re-merged
+                    const currentKeys = Object.keys(mergedVocabulary).sort();
+                    const remergedKeys = Object.keys(remergedVocab).sort();
+                    
+                    if (JSON.stringify(currentKeys) !== JSON.stringify(remergedKeys)) {
+                        issues.push('Merged vocabulary keys don\'t match expected keys');
+                    }
+                    
+                    // Check word counts
+                    let totalCurrentOccurrences = 0;
+                    let totalRemergedOccurrences = 0;
+                    
+                    Object.values(mergedVocabulary).forEach(word => {
+                        totalCurrentOccurrences += word.totalOccurrences || 0;
+                    });
+                    
+                    Object.values(remergedVocab).forEach(word => {
+                        totalRemergedOccurrences += word.totalOccurrences || 0;
+                    });
+                    
+                    if (totalCurrentOccurrences !== totalRemergedOccurrences) {
+                        issues.push(`Occurrence count mismatch: ${totalCurrentOccurrences} vs ${totalRemergedOccurrences}`);
+                    }
+                    
+                    if (issues.length === 0) {
+                        document.getElementById('manualResult').innerHTML = 
+                            '<div class="success">✅ Data validation passed - all data is consistent</div>';
+                    } else {
+                        document.getElementById('manualResult').innerHTML = 
+                            `<div class="error">❌ Data validation found issues:<br>${issues.join('<br>')}</div>`;
+                    }
+                    
+                } catch (error) {
+                    document.getElementById('manualResult').innerHTML = 
+                        `<div class="error">❌ Validation error: ${error.message}</div>`;
+                }
+            });
+        }
+
+        function clearMergedData() {
+            if (!confirm('Are you sure you want to clear all merged vocabulary data? This will not affect your original learned items.')) {
+                return;
+            }
+            
+            chrome.storage.local.remove(['mergedVocabulary'], () => {
+                log('Merged vocabulary data cleared');
+                document.getElementById('manualResult').innerHTML = 
+                    '<div class="warning">⚠️ Merged vocabulary data cleared. Run migration again to recreate.</div>';
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Migration tool initialized');
+        });
+    </script>
+</body>
+</html>

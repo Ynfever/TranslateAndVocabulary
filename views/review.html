@@ -7,18 +7,28 @@
     <link rel="stylesheet" href="../styles/review.css">
     <link href="https://fonts.googleapis.com/css2?family=Headland+One&family=Inter&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="review-page">
     <div class="review-container">
+        <div class="unit-info-container">
+            <span id="unit-info" class="unit-info"></span>
+        </div>
         <div class="counter">
-            <span id="current-word">1</span> / <span id="total-words">0</span>
+            <span id="current-word">1</span>
+            <span id="total-group">/<span id="total-words">0</span></span>
         </div>
         <button id="back-button" class="nav-button">
             <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 18L9 12L15 6" stroke="#d1d1d1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
-        <div class="card-container">
+        <div class="word-card-scroll-container">
+            <div class="card-container" id="word-card-container">
             <div class="word-section">
+                <button id="star-btn" class="star-btn" title="Star" aria-label="Star word" aria-pressed="false">
+                    <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                    </svg>
+                </button>
                 <h1 id="word"></h1>
                 <p id="definition"></p>
             </div>
@@ -54,12 +64,14 @@
                 </div>
             </div>
         </div>
+        </div>
         <button id="next-button" class="nav-button">
             <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 18L9 12L15 6" stroke="#d1d1d1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
     </div>
+    <script src="../scripts/vocabulary-merger.js"></script>
     <script src="../scripts/review.js"></script>
 </body>
 </html>

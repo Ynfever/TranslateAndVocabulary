@@ -15,7 +15,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["scripts/content.js"],
+      "js": ["scripts/vocabulary-merger.js", "scripts/content.js"],
       "css": ["styles/style.css"]
     }
   ],

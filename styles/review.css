@@ -14,22 +14,41 @@ body, html {
     width: 100%;
     height: 100%;
     display: flex;
-    justify-content: space-between; /* Pushes children to the edges */
+    justify-content: space-between; /* Pushes nav buttons to the edges */
     align-items: center;
     padding: 0 40px; /* Add some padding on the sides */
     box-sizing: border-box; /* Include padding in width calculation */
 }
 
+.word-card-scroll-container {
+    position: absolute;
+    top: 0; /* Use full height */
+    bottom: 0; /* Use full height */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    width: 560px;
+    z-index: 10;
+    overflow-y: auto; /* Handle scrolling */
+    padding: 80px 0; /* Add top/bottom padding for margins */
+    box-sizing: border-box; /* Include padding in size */
+    /* Hide scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+.word-card-scroll-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 #word-card-container {
     width: 540px;
-    height: 720px;
-    border-radius: 16px;
-    box-shadow: 0 0 7.4px rgba(0,0,0,0.25);
-    overflow-y: auto; /* Changed to auto for scrolling */
-    z-index: 10;
-    background-color: #fff; /* Added background color */
-    padding: 20px; /* Added padding */
+    height: auto; /* Let content determine height */
+    border-radius: 16px; /* Card styling */
+    box-shadow: 0 0 7.4px rgba(0,0,0,0.25); /* Card styling */
+    overflow-y: visible; /* No scrolling on the container itself */
+    background-color: #fff; /* Card background */
+    padding: 40px; /* Card internal padding */
     box-sizing: border-box; /* Include padding in size */
+    margin: 0 auto; /* Center horizontally in scroll container */
 }
 
 .nav-button {
@@ -60,14 +79,156 @@ body, html {
     top: 20px;
     right: 40px;
     font-family: 'Headland One', serif;
-    font-size: 60px;
-    color: #9f9f9f;
     z-index: 20;
-    text-align: center;
-    white-space: nowrap;
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.unit-info-container {
+    position: absolute;
+    top: 30px;
+    left: 50px;
+    font-family: 'Headland One', serif;
+    z-index: 20;
+    display: flex;
+    align-items: baseline;
+}
+
+.unit-info {
+    color: #e87057;
+    font-size: 50px;
+    display: none;
 }
 
 #current-word {
     font-size: 70px;
     color: #000000;
+}
+
+#total-group {
+    font-size: 50px;
+    color: #9f9f9f;
+}
+
+#definition {
+    transition: filter 0.2s ease-in-out;
+}
+
+#definition.blurred {
+    filter: blur(5px);
+    cursor: pointer;
+}
+
+#definition.blurred:hover {
+    filter: blur(0);
+}
+
+.star-btn {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.star-btn svg path {
+    fill: #d1d1d1;
+    transition: fill 0.2s ease-in-out;
+}
+
+.star-btn[aria-pressed="true"] svg path { 
+    fill: #e8b357; 
+}
+
+.star-btn:hover svg path { 
+    fill: #e8b357; 
+}
+
+/* Unit completion dialog styles */
+.unit-completion-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    font-family: 'Inter', sans-serif;
+}
+
+.dialog-overlay {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dialog-content {
+    background: white;
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-content h2 {
+    font-family: 'Headland One', serif;
+    font-size: 28px;
+    color: #e87057;
+    margin: 0 0 20px 0;
+}
+
+.dialog-content p {
+    color: #535353;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.dialog-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.primary-btn, .secondary-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.primary-btn {
+    background: #e87057;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #d65a47;
+    transform: translateY(-1px);
+}
+
+.secondary-btn {
+    background: #f0f0f0;
+    color: #535353;
+}
+
+.secondary-btn:hover {
+    background: #e0e0e0;
+}
+
+.shortcut {
+    font-size: 12px;
+    opacity: 0.7;
+    font-weight: normal;
 }

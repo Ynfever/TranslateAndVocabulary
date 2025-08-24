@@ -127,7 +127,7 @@ Return the result as a JSON object with exactly two keys:
 Example format:
 {
   "sentence": "The ancient relic was carefully preserved in the museum.",
-  "translation": "这件古代遗物被小心地保存在博物馆里�?
+  "translation": "这件古代遗物被小心地保存在博物馆里。"
 }
 
 Do not include any other text, markdown, or explanations. Return only the JSON object.`;
@@ -175,7 +175,55 @@ Do not include any other text, markdown, or explanations. Return only the JSON o
 
 async function generateCardDetails(word, originalText, apiKey) {
     const getCardPrompt = (word, context) => {
-        return `You are an expert in vocabulary and language assessment, specializing in GRE preparation. Your task is to analyze the provided English word and its context(s).
+        // Detect if this is a merged word context (multiple examples)
+        const isMultipleExamples = context.includes('Example 1:') && context.includes('Example 2:');
+        
+        if (isMultipleExamples) {
+            return `You are an expert in vocabulary and language assessment, specializing in GRE preparation. Your task is to analyze the provided English word and its multiple contexts.
+
+Word: "${word}"
+Multiple Contexts:
+${context}
+
+First, generate the following information, ensuring all definitions are in Simplified Chinese:
+1. **Confusing Words:** An array of objects for words similar in spelling or pronunciation but with different meanings. Each object must have "word" and "definition" keys. The key for this array in the JSON should be "confusable_words".
+2. **Equivalent Words:** An array of objects for words with meanings similar to the main word ("${word}"). These are crucial for GRE sentence equivalence. Each object must have "word" and "definition" keys. The key for this array in the JSON should be "equivalent_words".
+
+Next, analyze all the contexts provided. Based on the contexts, choose ONE of the following approaches:
+
+**Option A - If any context contains a GRE-style multiple-choice question (MCQ):**
+- Choose the most suitable MCQ from the contexts
+- Provide an "mcq" object containing "question", an array of "options" objects (each with "word" and "definition" in Simplified Chinese), and an array of "correct_answers"
+- Follow GRE rules: questions may have one or two correct answers; if two answers, they must be synonyms
+
+**Option B - If all contexts are regular sentences:**
+- Choose the most representative or challenging sentence as the main example
+- Provide an "example" object containing the selected "sentence", its "translation" in Chinese, and the specific "translated_word" for "${word}" in the context
+
+**Option C - Create a new comprehensive example:**
+- Generate a new, more comprehensive example sentence that incorporates the essence of multiple contexts
+- Provide an "example" object with the new "sentence", its "translation", and "translated_word"
+
+You must return the result as a single, valid JSON object with NO other text or markdown.
+
+Example format for multiple contexts:
+{
+  "confusable_words": [
+    {"word": "relict", "definition": "残遗的生物或地貌"},
+    {"word": "relish", "definition": "享受"}
+  ],
+  "equivalent_words": [
+    {"word": "vestige", "definition": "更偏向'痕迹'，可用于抽象概念"},
+    {"word": "artifact", "definition": "特指人工制品"}
+  ],
+  "example": {
+    "sentence": "The ancient relic, discovered in multiple archaeological sites, represents a vestige of our cultural heritage.",
+    "translation": "这件在多个考古遗址发现的古代遗物，代表着我们文化遗产的遗迹。",
+    "translated_word": "遗物"
+  }
+}`;
+        } else {
+            return `You are an expert in vocabulary and language assessment, specializing in GRE preparation. Your task is to analyze the provided English word and its original context.
 
 Word: "${word}"
 Context: "${context}"
@@ -184,26 +232,60 @@ First, generate the following information, ensuring all definitions are in Simpl
 1.  **Confusing Words:** An array of objects for words similar in spelling or pronunciation but with different meanings. Each object must have "word" and "definition" keys. The key for this array in the JSON should be "confusable_words".
 2.  **Equivalent Words:** An array of objects for words with meanings similar to the main word ("${word}"). These are crucial for GRE sentence equivalence. Each object must have "word" and "definition" keys. The key for this array in the JSON should be "equivalent_words". This list should contain synonyms for "${word}" and should NOT be influenced by the correct answers if the context is a multiple-choice question.
 
-Next, analyze the context(s). For each context found:
-- If it's a GRE-style multiple-choice question (MCQ), add it to an "mcqs" array
-- If it's a regular sentence, add it to an "examples" array
-
-**For MCQs:** Each MCQ object should contain:
-- "question": The question text
-- "options": Array of option objects (each with "word" and "definition" in Simplified Chinese) 
-- "correct_answers": Array of correct answer words
-
-**For Examples:** Each example object should contain:
-- "sentence": The sentence text
-- "translation": Chinese translation of the sentence
-- "translated_word": The specific Chinese translation of "${word}" in this context
-
-**Important:** Return ALL found MCQs and ALL found example sentences. If there's only one MCQ, use "mcq" (singular). If there's only one example, use "example" (singular). If there are multiple, use "mcqs" and "examples" (plural arrays).
+Next, analyze the context and determine if it is a regular example sentence or a GRE-style multiple-choice question (MCQ).
+- If it's a regular sentence, provide an "example" object containing the original "sentence", its "translation" in Chinese, and the specific "translated_word" for "${word}" in the context of the sentence.
+- If it's an MCQ, follow these GRE rules:
+    1.  The question may have one or two correct answers.
+    2.  If there are two correct answers, they must be synonyms that create sentences with the same meaning.
+    3.  **Crucially, the main word of this card ("${word}") is provided for context and is NOT necessarily a correct answer.**
+    4.  Provide the result as an "mcq" object containing "question", an array of "options" objects (each with "word" and "definition" in Simplified Chinese), and an array of "correct_answers".
 
 You must return the result as a single, valid JSON object with NO other text or markdown.
 
-Example for single context:
+Example:
+Word: relic
+Context: His political view, harking back to the turmoil in the 1934, is a _____ with no bearing on the present. prototype pretense paradigm relic contradiction vestige
 
+You should return:
+{
+  "confusable_words": [
+    {"word": "relict", "definition": "残遗的生物或地貌"},
+    {"word": "relish", "definition": "享受"}
+  ],
+  "equivalent_words": [
+    {"word": "vestige", "definition": "更偏向"痕迹"，可用于抽象概念"},
+    {"word": "artifact", "definition": "特指人工制品"}
+  ],
+  "mcq": {
+    "question": "His political view, harking back to the turmoil in the 1934, is a _____ with no bearing on the present.",
+    "options": [
+        {"word": "prototype", "definition": "原型"},
+        {"word": "pretense", "definition": "借口"},
+        {"word": "paradigm", "definition": "范例"},
+        {"word": "relic", "definition": "遗迹"},
+        {"word": "vestige", "definition": "痕迹"}
+    ],
+    "correct_answers": ["relic", "vestige"]
+  }
+}`;
+        }
+    };
+
+Next, analyze the context and determine if it is a regular example sentence or a GRE-style multiple-choice question (MCQ).
+- If it's a regular sentence, provide an "example" object containing the original "sentence", its "translation" in Chinese, and the specific "translated_word" for "${word}" in the context of the sentence.
+- If it's an MCQ, follow these GRE rules:
+    1.  The question may have one or two correct answers.
+    2.  If there are two correct answers, they must be synonyms that create sentences with the same meaning.
+    3.  **Crucially, the main word of this card ("${word}") is provided for context and is NOT necessarily a correct answer.**
+    4.  Provide the result as an "mcq" object containing "question", an array of "options" objects (each with "word" and "definition" in Simplified Chinese), and an array of "correct_answers".
+
+You must return the result as a single, valid JSON object with NO other text or markdown.
+
+Example:
+Word: relic
+Context: His political view, harking back to the turmoil in the 1934, is a _____ with no bearing on the present. prototype pretense paradigm relic contradiction vestige
+
+You should return:
 {
   "confusable_words": [
     {"word": "relict", "definition": "残遗的生物或地貌"},
@@ -214,37 +296,18 @@ Example for single context:
     {"word": "artifact", "definition": "特指人工制品"}
   ],
   "mcq": {
-    "question": "His political view is a _____ with no bearing on the present.",
-    "options": [{"word": "relic", "definition": "遗迹"}, {"word": "vestige", "definition": "痕迹"}],
+    "question": "His political view, harking back to the turmoil in the 1934, is a _____ with no bearing on the present.",
+    "options": [
+        {"word": "prototype", "definition": "原型"},
+        {"word": "pretense", "definition": "借口"},
+        {"word": "paradigm", "definition": "范例"},
+        {"word": "relic", "definition": "遗迹"},
+        {"word": "vestige", "definition": "痕迹"}
+    ],
     "correct_answers": ["relic", "vestige"]
   }
 }
-
-Example for multiple contexts:
-{
-  "confusable_words": [{"word": "relict", "definition": "残遗的生物或地貌"}],
-  "equivalent_words": [{"word": "vestige", "definition": "痕迹"}],
-  "mcqs": [
-    {
-      "question": "First question _____ here.",
-      "options": [{"word": "relic", "definition": "遗迹"}],
-      "correct_answers": ["relic"]
-    },
-    {
-      "question": "Second question _____ here.",
-      "options": [{"word": "vestige", "definition": "痕迹"}],
-      "correct_answers": ["vestige"]
-    }
-  ],
-  "examples": [
-    {
-      "sentence": "The ancient relic was preserved.",
-      "translation": "古代遗物被保存了。",
-      "translated_word": "遗物"
-    }
-  ]
-}
-There might be a single mcq or example or multiples.`;
+`;
     };
 
     try {
@@ -283,30 +346,12 @@ There might be a single mcq or example or multiples.`;
         populateList(document.getElementById('confusable-words-list'), cardData.confusable_words);
         populateList(document.getElementById('equivalent-words-list'), cardData.equivalent_words);
 
-        // Normalize data - convert single items to arrays for unified processing
-        const mcqs = cardData.mcqs || (cardData.mcq ? [cardData.mcq] : []);
-        const examples = cardData.examples || (cardData.example ? [cardData.example] : []);
-        
-        let hasDisplayedContent = false;
-        
-        // Handle all MCQs uniformly
-        mcqs.forEach((mcq, index) => {
-            if (index === 0) {
-                displayMCQ(mcq, word);
-            } else {
-                appendMCQ(mcq, word, index);
-            }
-        });
-        if (mcqs.length > 0) hasDisplayedContent = true;
-        
-        // Handle all examples uniformly  
-        examples.forEach((example, index) => {
-            if (index === 0 && !hasDisplayedContent) {
-                displayExample(example, word);
-            } else {
-                appendExample(example, word, index);
-            }
-        });
+        // Check for MCQ or Example Sentence
+        if (cardData.mcq) {
+            displayMCQ(cardData.mcq, word);
+        } else if (cardData.example) {
+            displayExample(cardData.example, word);
+        }
 
     } catch (error) {
         console.error('Error generating word card details:', error);
@@ -616,244 +661,6 @@ function displayMCQ(mcq, word) {
 }
 
 /**
- * Append additional MCQ to existing MCQ container
- * @param {Object} mcq - MCQ data
- * @param {string} word - The target word
- * @param {number} index - MCQ index for unique IDs
- */
-function appendMCQ(mcq, word, index) {
-    const mcqContainer = document.getElementById('mcq-container');
-    
-    // Create additional MCQ section
-    const mcqSection = document.createElement('div');
-    mcqSection.className = 'mcq-section';
-    mcqSection.innerHTML = `
-        <hr style="margin: 20px 0; border: 1px solid #e1e5e9;">
-        <div class="mcq-question" id="mcq-question-${index}"></div>
-        <ul class="mcq-options-list" id="mcq-options-list-${index}"></ul>
-    `;
-    
-    mcqContainer.appendChild(mcqSection);
-    
-    const questionElement = document.getElementById(`mcq-question-${index}`);
-    const optionsListElement = document.getElementById(`mcq-options-list-${index}`);
-
-    // Highlight the word if it appears in the question text
-    const regex = new RegExp(`\\b(${word})\\b`, 'gi');
-    const highlightedQuestion = mcq.question.replace(regex, '<strong>$1</strong>');
-    questionElement.innerHTML = highlightedQuestion;
-    
-    optionsListElement.innerHTML = '';
-
-    const correctAnswers = mcq.correct_answers || [mcq.correct_answer];
-
-    mcq.options.forEach(option => {
-        const li = document.createElement('li');
-        li.textContent = option.word;
-        li.dataset.word = option.word; 
-        li.dataset.definition = option.definition;
-        li.dataset.state = 'unanswered';
-
-        li.addEventListener('click', () => {
-            if (li.dataset.state === 'unanswered') {
-                if (correctAnswers.includes(li.dataset.word)) {
-                    li.classList.add('correct');
-                } else {
-                    li.classList.add('incorrect');
-                }
-                li.dataset.state = 'revealed';
-            } else if (li.dataset.state === 'revealed') {
-                // On second click, show definition
-                if (option.definition && !li.textContent.includes(option.definition)) {
-                    li.textContent = `${option.word} (${option.definition})`;
-                    li.dataset.state = 'definition-shown';
-                }
-            } else if (li.dataset.state === 'definition-shown') {
-                // Third click: star the word and highlight
-                li.classList.add('starred');
-                li.dataset.state = 'starred';
-                
-                // First, add to vocabulary (learnedItems) like content.js
-                const wordToStar = option.word;
-                const currentTimestamp = Date.now();
-                
-                const newVocabularyItem = {
-                    originalText: `MCQ ${index + 1} option for: ${word}`,
-                    translation: `Added from word card: ${wordToStar} (${option.definition})`,
-                    selectedWords: [{
-                        word: wordToStar,
-                        translation: option.definition,
-                        definition: option.definition
-                    }],
-                    timestamp: currentTimestamp
-                };
-                
-                console.log(`[WordCard MCQ] Adding to vocabulary:`, newVocabularyItem);
-                
-                // Add to learnedItems first
-                chrome.storage.local.get({ learnedItems: [] }, ({ learnedItems }) => {
-                    const updatedLearnedItems = [...(learnedItems || []), newVocabularyItem];
-                    
-                    chrome.storage.local.set({ learnedItems: updatedLearnedItems }, () => {
-                        console.log(`[WordCard MCQ] Added to vocabulary successfully`);
-                        
-                        // Then add to starred words using the new timestamp
-                        chrome.storage.local.get({ starredWords: [] }, ({ starredWords }) => {
-                            // Support both old format (strings) and new format (objects)
-                            const starredSet = new Set();
-                            const starredObjects = [];
-                            
-                            (starredWords || []).forEach(item => {
-                                if (typeof item === 'string') {
-                                    // Old format: "word::timestamp"
-                                    starredSet.add(item);
-                                    const [word, timestamp] = item.split('::');
-                                    starredObjects.push({
-                                        word: word,
-                                        timestamp: timestamp,
-                                        definition: null,
-                                        source: 'legacy'
-                                    });
-                                } else {
-                                    // New format: object
-                                    const key = `${item.word}::${item.timestamp}`;
-                                    starredSet.add(key);
-                                    starredObjects.push(item);
-                                }
-                            });
-                            
-                            // Check if this word (with current timestamp) is already starred
-                            const newKey = `${wordToStar}::${currentTimestamp}`;
-                            if (!starredSet.has(newKey)) {
-                                // Add new starred word object
-                                starredObjects.push({
-                                    word: wordToStar,
-                                    timestamp: currentTimestamp,
-                                    definition: option.definition,
-                                    source: 'wordcard-mcq',
-                                    originalContext: `MCQ ${index + 1} option for: ${word}`
-                                });
-                                
-                                console.log(`[WordCard MCQ] Starring word:`, wordToStar);
-                                
-                                chrome.storage.local.set({ starredWords: starredObjects }, () => {
-                                    console.log(`[WordCard MCQ] Word starred successfully`);
-                                });
-                            }
-                        });
-                    });
-                });
-            }
-        });
-        optionsListElement.appendChild(li);
-    });
-}
-
-/**
- * Append additional example to existing example container
- * @param {Object} example - Example data
- * @param {string} word - The target word
- * @param {number} index - Example index
- */
-function appendExample(example, word, index) {
-    const exampleContainer = document.getElementById('example-container');
-    
-    // Create additional example section
-    const exampleSection = document.createElement('div');
-    exampleSection.className = 'example-section';
-    exampleSection.innerHTML = `
-        <hr style="margin: 20px 0; border: 1px solid #e1e5e9;">
-        <div class="example-text" id="example-text-${index}"></div>
-    `;
-    
-    exampleContainer.appendChild(exampleSection);
-    
-    const exampleTextElement = document.getElementById(`example-text-${index}`);
-    
-    // Highlight English word
-    const regex = new RegExp(`\\b(${word})\\b`, 'gi');
-    const highlightedSentence = example.sentence.replace(regex, '<strong>$1</strong>');
-    
-    // Highlight Chinese translation of the word
-    const highlightedTranslation = example.translation.replace(example.translated_word, `<strong>${example.translated_word}</strong>`);
-
-    exampleTextElement.innerHTML = `${highlightedSentence}<br><br>${highlightedTranslation}`;
-}
-
-/**
- * Helper function to add word to vocabulary and starred words
- * @param {string} wordToStar - Word to add
- * @param {string} definition - Word definition
- * @param {string} originalText - Context text
- * @param {string} source - Source identifier
- */
-function addWordToVocabulary(wordToStar, definition, originalText, source) {
-    const currentTimestamp = Date.now();
-    
-    const newVocabularyItem = {
-        originalText: originalText,
-        translation: `Added from word card: ${wordToStar} (${definition})`,
-        selectedWords: [{
-            word: wordToStar,
-            translation: definition,
-            definition: definition
-        }],
-        timestamp: currentTimestamp
-    };
-    
-    console.log(`[WordCard] Adding to vocabulary:`, newVocabularyItem);
-    
-    // Add to learnedItems first
-    chrome.storage.local.get({ learnedItems: [] }, ({ learnedItems }) => {
-        const updatedLearnedItems = [...(learnedItems || []), newVocabularyItem];
-        
-        chrome.storage.local.set({ learnedItems: updatedLearnedItems }, () => {
-            console.log(`[WordCard] Added to vocabulary successfully`);
-            
-            // Then add to starred words using the new timestamp
-            chrome.storage.local.get({ starredWords: [] }, ({ starredWords }) => {
-                // Support both old format (strings) and new format (objects)
-                const starredSet = new Set();
-                const starredObjects = [];
-                
-                (starredWords || []).forEach(item => {
-                    if (typeof item === 'string') {
-                        starredSet.add(item);
-                        const [word, timestamp] = item.split('::');
-                        starredObjects.push({
-                            word: word,
-                            timestamp: timestamp,
-                            definition: null,
-                            source: 'legacy'
-                        });
-                    } else {
-                        const key = `${item.word}::${item.timestamp}`;
-                        starredSet.add(key);
-                        starredObjects.push(item);
-                    }
-                });
-                
-                const key = `${wordToStar}::${currentTimestamp}`;
-                
-                if (!starredSet.has(key)) {
-                    const newStarredItem = {
-                        word: wordToStar,
-                        timestamp: currentTimestamp,
-                        definition: definition,
-                        source: source
-                    };
-                    starredObjects.push(newStarredItem);
-                    
-                    chrome.storage.local.set({ starredWords: starredObjects }, () => {
-                        console.log(`[WordCard] Updated starred words:`, starredObjects);
-                    });
-                }
-            });
-        });
-    });
-}
-
-/**
  * Generate card details for merged words with multiple examples
  * @param {Object} mergedWordData - Merged word data with multiple examples
  * @param {string} apiKey - API key for generating additional content
@@ -903,7 +710,7 @@ async function displayMergedExamples(mergedWordData) {
                     <div class="example-en">${highlightWord(example.originalText, mergedWordData.word)}</div>
                     <div class="example-cn">${example.translation}</div>
                     <div class="example-context">
-                        <span class="context-translation">"${mergedWordData.word}" �?${example.contextTranslation || example.definition}</span>
+                        <span class="context-translation">"${mergedWordData.word}" → ${example.contextTranslation || example.definition}</span>
                     </div>
                 </div>
             </div>
@@ -990,7 +797,7 @@ Example format:
     {"word": "relish", "definition": "享受"}
   ],
   "equivalent_words": [
-    {"word": "vestige", "definition": "更偏�?痕迹'，可用于抽象概念"},
+    {"word": "vestige", "definition": "更偏向'痕迹'，可用于抽象概念"},
     {"word": "artifact", "definition": "特指人工制品"}
   ]
 }`;
