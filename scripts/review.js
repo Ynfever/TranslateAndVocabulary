@@ -275,7 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!processedWords.has(wordKey)) {
                             words.push({
                                 word: mergedWord.word,
-                                timestamp: representativeExample.timestamp,
+                                // Use firstTimestamp for chronological sorting, but keep representative timestamp for daily filtering
+                                timestamp: mergedWord.firstTimestamp || representativeExample.timestamp,
+                                dailyTimestamp: representativeExample.timestamp, // Used for daily filtering
                                 originalText: mergedWord.examples.map(ex => ex.originalText).join(' | '),
                                 definition: mergedWord.definition,
                                 translation: mergedWord.definition,
@@ -329,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (mode === 'daily') {
                 const todayKey = getLocalDateKey(Date.now());
-                words = words.filter(w => getLocalDateKey(w.timestamp) === todayKey);
+                words = words.filter(w => getLocalDateKey(w.dailyTimestamp || w.timestamp) === todayKey);
             } else if (mode === 'unit') {
                 // choose unit index via query, default 1
                 const unitIndex = Math.max(1, parseInt(params.get('unit') || '1', 10));
@@ -393,6 +395,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     }))
                 });
             }
+
+            // Sort words by timestamp (oldest first - chronological order)
+            words.sort((a, b) => {
+                // Convert timestamps to numbers for proper comparison
+                const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+                const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
+                return timestampA - timestampB;
+            });
+
+            console.log(`[Review Sort] Words after sorting by timestamp:`, words.map(w => ({
+                word: w.word,
+                timestamp: w.timestamp,
+                timestampMs: typeof w.timestamp === 'string' ? new Date(w.timestamp).getTime() : w.timestamp,
+                date: new Date(typeof w.timestamp === 'string' ? w.timestamp : w.timestamp).toLocaleString(),
+                dailyTimestamp: w.dailyTimestamp,
+                dailyDate: w.dailyTimestamp ? new Date(typeof w.dailyTimestamp === 'string' ? w.dailyTimestamp : w.dailyTimestamp).toLocaleString() : 'N/A'
+            })));
 
             allWords = words;
 
@@ -572,6 +591,7 @@ Next, analyze the context(s). For each context found:
 - "question": The question text
 - "options": Array of option objects (each with "word" and "definition" in Simplified Chinese) 
 - "correct_answers": Array of correct answer words
+**Important** Note that the main word ${word} is not necessary the answer to the question. There are three types of questions, single answer one blank question, double answers one blank question (the two answers must be equivalent words), two blanks question with one answer for each blank.
 
 **For Examples:** Each example object should contain:
 - "sentence": The sentence text
@@ -600,13 +620,13 @@ Example for multiple contexts:
   "mcqs": [
     {
       "question": "First question _____ here.",
-      "options": [{"word": "relic", "definition": "遗迹"}],
-      "correct_answers": ["relic"]
+      "options": [{"word": "relic", "definition": "遗迹"}, {"word": "vestige", "definition": "痕迹"}, {"word": "prototype", "definition": "原型"}],
+      "correct_answers": ["relic", "vestige"]
     },
     {
       "question": "Second question _____ here.",
-      "options": [{"word": "vestige", "definition": "痕迹"}],
-      "correct_answers": ["vestige"]
+      "options": [{"word": "relic", "definition": "遗迹"}, {"word": "historical site", "definition": "历史遗迹"}, {"word": "prospect", "definition": "前景"}],
+      "correct_answers": ["relic", "historical site"]
     }
   ],
   "examples": [

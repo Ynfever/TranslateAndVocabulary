@@ -192,6 +192,7 @@ Next, analyze the context(s). For each context found:
 - "question": The question text
 - "options": Array of option objects (each with "word" and "definition" in Simplified Chinese) 
 - "correct_answers": Array of correct answer words
+**Important** Note that the main word ${word} is not necessary the answer to the question. There are three types of questions, single answer one blank question, double answers one blank question (the two answers must be equivalent words), two blanks question with one answer for each blank.
 
 **For Examples:** Each example object should contain:
 - "sentence": The sentence text
@@ -215,7 +216,7 @@ Example for single context:
   ],
   "mcq": {
     "question": "His political view is a _____ with no bearing on the present.",
-    "options": [{"word": "relic", "definition": "遗迹"}, {"word": "vestige", "definition": "痕迹"}],
+    "options": [{"word": "relic", "definition": "遗迹"}, {"word": "vestige", "definition": "痕迹"}, {"word": "prototype", "definition": "原型"}],
     "correct_answers": ["relic", "vestige"]
   }
 }
@@ -227,13 +228,13 @@ Example for multiple contexts:
   "mcqs": [
     {
       "question": "First question _____ here.",
-      "options": [{"word": "relic", "definition": "遗迹"}],
-      "correct_answers": ["relic"]
+      "options": [{"word": "relic", "definition": "遗迹"}, {"word": "vestige", "definition": "痕迹"}, {"word": "prototype", "definition": "原型"}],
+      "correct_answers": ["relic", "vestige"]
     },
     {
       "question": "Second question _____ here.",
-      "options": [{"word": "vestige", "definition": "痕迹"}],
-      "correct_answers": ["vestige"]
+      "options": [{"word": "relic", "definition": "遗迹"}, {"word": "historical site", "definition": "历史遗迹"}, {"word": "prospect", "definition": "前景"}],
+      "correct_answers": ["relic", "historical site"]
     }
   ],
   "examples": [
