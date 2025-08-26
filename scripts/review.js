@@ -329,6 +329,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 isMerged: w.isMerged || false
             })));
 
+            // Sort words by timestamp FIRST (oldest first - chronological order)
+            words.sort((a, b) => {
+                // Convert timestamps to numbers for proper comparison
+                const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+                const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
+                return timestampA - timestampB;
+            });
+
+            console.log(`[Review Sort] All words after sorting by timestamp:`, words.map(w => ({
+                word: w.word,
+                timestamp: w.timestamp,
+                timestampMs: typeof w.timestamp === 'string' ? new Date(w.timestamp).getTime() : w.timestamp,
+                date: new Date(typeof w.timestamp === 'string' ? w.timestamp : w.timestamp).toLocaleString()
+            })));
+
+            // Apply filters AFTER sorting
             if (mode === 'daily') {
                 const todayKey = getLocalDateKey(Date.now());
                 words = words.filter(w => getLocalDateKey(w.dailyTimestamp || w.timestamp) === todayKey);
@@ -337,6 +353,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const unitIndex = Math.max(1, parseInt(params.get('unit') || '1', 10));
                 const start = (unitIndex - 1) * 20;
                 words = words.slice(start, start + 20);
+                console.log(`[Review Unit] Selected unit ${unitIndex}, words ${start + 1}-${start + words.length}:`, words.map(w => ({
+                    word: w.word,
+                    date: new Date(typeof w.timestamp === 'string' ? w.timestamp : w.timestamp).toLocaleString()
+                })));
             } else if (mode === 'star') {
                 console.log(`[Review Filter] Raw starred words from storage:`, data.starredWords);
                 
@@ -395,23 +415,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }))
                 });
             }
-
-            // Sort words by timestamp (oldest first - chronological order)
-            words.sort((a, b) => {
-                // Convert timestamps to numbers for proper comparison
-                const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
-                const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
-                return timestampA - timestampB;
-            });
-
-            console.log(`[Review Sort] Words after sorting by timestamp:`, words.map(w => ({
-                word: w.word,
-                timestamp: w.timestamp,
-                timestampMs: typeof w.timestamp === 'string' ? new Date(w.timestamp).getTime() : w.timestamp,
-                date: new Date(typeof w.timestamp === 'string' ? w.timestamp : w.timestamp).toLocaleString(),
-                dailyTimestamp: w.dailyTimestamp,
-                dailyDate: w.dailyTimestamp ? new Date(typeof w.dailyTimestamp === 'string' ? w.dailyTimestamp : w.dailyTimestamp).toLocaleString() : 'N/A'
-            })));
 
             allWords = words;
 
