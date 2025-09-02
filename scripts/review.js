@@ -251,42 +251,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Object.keys(mergedVocabulary).length > 0) {
                 console.log("[Review] Using merged vocabulary data");
                 
-                // For merged vocabulary, we need to create multiple entries for words that appear on different days
-                // to ensure they show up in both daily and total reviews
-                const processedWords = new Map();
-                
+                // Create separate entries for each time a word was saved (each example)
+                // This allows words to appear multiple times in unit review based on when they were saved
                 Object.values(mergedVocabulary).forEach(mergedWord => {
-                    // Group examples by date to handle words appearing on multiple days
-                    const examplesByDate = new Map();
-                    
-                    mergedWord.examples.forEach(example => {
-                        const dateKey = getLocalDateKey(example.timestamp);
-                        if (!examplesByDate.has(dateKey)) {
-                            examplesByDate.set(dateKey, []);
-                        }
-                        examplesByDate.get(dateKey).push(example);
+                    // Sort examples by timestamp to maintain chronological order
+                    const sortedExamples = [...mergedWord.examples].sort((a, b) => {
+                        const timestampA = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : a.timestamp;
+                        const timestampB = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : b.timestamp;
+                        return timestampA - timestampB;
                     });
                     
-                    // Create an entry for each date this word appeared
-                    examplesByDate.forEach((examplesOnDate, dateKey) => {
-                        const representativeExample = examplesOnDate[0]; // Use first example as representative
-                        const wordKey = `${mergedWord.word.toLowerCase()}::${dateKey}`;
-                        
-                        if (!processedWords.has(wordKey)) {
-                            words.push({
-                                word: mergedWord.word,
-                                // Use firstTimestamp for chronological sorting, but keep representative timestamp for daily filtering
-                                timestamp: mergedWord.firstTimestamp || representativeExample.timestamp,
-                                dailyTimestamp: representativeExample.timestamp, // Used for daily filtering
-                                originalText: mergedWord.examples.map(ex => ex.originalText).join(' | '),
-                                definition: mergedWord.definition,
-                                translation: mergedWord.definition,
-                                isMerged: true,
-                                mergedData: mergedWord,
-                                dateKey: dateKey
-                            });
-                            processedWords.set(wordKey, true);
-                        }
+                    // Create a word entry for each time it was saved
+                    sortedExamples.forEach((example, index) => {
+                        words.push({
+                            word: mergedWord.word,
+                            timestamp: example.timestamp, // Use the specific example's timestamp for sorting
+                            originalText: example.originalText,
+                            definition: mergedWord.definition,
+                            translation: mergedWord.definition,
+                            isMerged: true,
+                            mergedData: mergedWord,
+                            currentExampleIndex: index, // Track which example this represents
+                            contextTranslation: example.contextTranslation,
+                            specificDefinition: example.definition
+                        });
                     });
                 });
                 
@@ -347,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply filters AFTER sorting
             if (mode === 'daily') {
                 const todayKey = getLocalDateKey(Date.now());
-                words = words.filter(w => getLocalDateKey(w.dailyTimestamp || w.timestamp) === todayKey);
+                words = words.filter(w => getLocalDateKey(w.timestamp) === todayKey);
             } else if (mode === 'unit') {
                 // choose unit index via query, default 1
                 const unitIndex = Math.max(1, parseInt(params.get('unit') || '1', 10));
