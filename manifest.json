@@ -4,7 +4,8 @@
   "version": "1.0",
   "description": "Translate selected text, choose key vocabulary, and save for later review.",
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/"
