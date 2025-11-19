@@ -169,18 +169,39 @@ function showPopup(top, left, text) {
             
             // Check if the error is related to API key configuration
             if (response.error.includes('No API key configured') || 
-                response.error.includes('Invalid API key') || 
-                response.error.includes('API key access denied')) {
-                translationDiv.innerHTML = `
-                    <div style="color: #d73a49; margin-bottom: 8px;">⚠️ ${response.error}</div>
-                    <button onclick="chrome.runtime.openOptionsPage()" 
-                            style="background: #0366d6; color: white; border: none; padding: 4px 8px; 
-                                   border-radius: 4px; cursor: pointer; font-size: 12px;">
-                        Open Settings
-                    </button>
-                `;
+              response.error.includes('Invalid API key') || 
+              response.error.includes('API key access denied')) {
+              // Show error message
+              translationDiv.innerHTML = `
+                <div style="color: #d73a49; margin-bottom: 8px;">⚠️ ${response.error}</div>
+              `;
+
+              // Create "Open Settings" button with a click handler in the
+              // content-script context so we can safely call chrome.runtime
+              const settingsButton = document.createElement('button');
+              settingsButton.textContent = 'Open Settings';
+              settingsButton.style.cssText = `
+                background: #0366d6;
+                color: white;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+              `;
+
+              // 通过发送消息让 background.js 打开设置页
+              settingsButton.addEventListener('click', () => {
+                if (chrome.runtime && chrome.runtime.sendMessage) {
+                  chrome.runtime.sendMessage({ action: 'openOptionsPage' });
+                } else {
+                  console.error('Cannot send message to background script');
+                }
+              });
+
+              translationDiv.appendChild(settingsButton);
             } else {
-                translationDiv.textContent = `Translation failed: ${response.error}`;
+              translationDiv.textContent = `Translation failed: ${response.error}`;
             }
         } else {
             console.error('No response received from background script');

@@ -52,6 +52,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.action === "apiKeyUpdated") {
     // Handle API key update notification
     console.log("API key has been updated");
+  } else if (request.action === "openOptionsPage") {
+    // Open the extension's options page
+    if (chrome.runtime.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    } else {
+      // Fallback: open options.html directly
+      chrome.tabs.create({
+        url: chrome.runtime.getURL('views/options.html')
+      });
+    }
   }
 });
 
